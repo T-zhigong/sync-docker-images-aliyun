@@ -23,6 +23,7 @@ jobs:
         run: |
           echo "加载环境变量参数"
           source .env
+          echo "DOCKER_IMAGES is $DOCKER_IMAGES"
 
       - name: 3.登录阿里云容器镜像服务
         run: |
