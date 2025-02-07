@@ -56,6 +56,11 @@ jobs:
             docker rmi ${ALIYUN_IMAGE}
           done
 
+      - name: 调试信息
+        run: |
+          echo "Docker images:"
+          docker images
+
       - name: 5.清理 Docker 镜像
         run: |
           docker system prune -f
