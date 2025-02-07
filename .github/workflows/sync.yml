@@ -32,10 +32,15 @@ jobs:
       - name: 4.同步 Docker 镜像
         run: |
           for IMAGE in "${DOCKER_IMAGES[@]}"; do
+          
+            echo "Image: $IMAGE"
+            
             IMAGE_NAME=$(echo $IMAGE | cut -d: -f1)
             IMAGE_TAG=$(echo $IMAGE | cut -d: -f2)
             ALIYUN_IMAGE="${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}"
 
+            echo "ALIYUN_IMAGE: $ALIYUN_IMAGE"
+            
             # 检查镜像是否已经存在
             echo "检查镜像 ${ALIYUN_IMAGE} 是否已经存在于阿里云上"
             docker pull ${ALIYUN_IMAGE} || true  # 如果镜像不存在，则跳过
