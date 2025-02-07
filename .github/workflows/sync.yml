@@ -25,11 +25,11 @@ jobs:
 
       - name: 4.同步 Docker 镜像
         run: |
-          # 拉取 Docker 镜像
+          # 拉取指定版本的 MySQL 镜像
           docker pull mysql:8.0.41
-          # 标记镜像
-          docker tag mysql ${ALIYUN_REGISTRY}/${IMAGE_REPO}:8.0.41
-          # 推送到阿里云
+          # 标记镜像时指定正确的标签
+          docker tag mysql:8.0.41 ${ALIYUN_REGISTRY}/${IMAGE_REPO}:8.0.41
+          # 推送到阿里云容器镜像服务
           docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:8.0.41
           
       - name: 调试信息
