@@ -51,7 +51,7 @@ jobs:
               # 标记镜像
               docker tag $IMAGE ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}
               # 推送到阿里云
-              docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}
+              docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG} || { echo "推送失败"; exit 1; }
             else
               echo "镜像 ${ALIYUN_IMAGE} 已经存在。跳过 pull 和 push "
             fi
@@ -61,11 +61,7 @@ jobs:
             docker rmi ${ALIYUN_IMAGE}
           done
 
-      - name: 调试信息
+      - name: 5.调试信息
         run: |
           echo "Docker images:"
           docker images
-
-      - name: 5.清理 Docker 镜像
-        run: |
-          docker system prune -f
