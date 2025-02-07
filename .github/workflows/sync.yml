@@ -1,0 +1,60 @@
+name: Sync Docker Images AliYun
+on:
+  schedule:
+    - cron: '0 0 * * 5' # 每周五 00:00 UTC 执行任务
+  workflow_dispatch:  # 允许手动触发同步
+
+jobs:
+  # 定义任务
+  sync:
+    runs-on: ubuntu-latest # 运行在 Ubuntu Linux环境上
+    env:
+      ALIYUN_USERNAME: 去棹残阳里
+      ALIYUN_PASSWORD: TianLi71773@
+      ALIYUN_REGISTRY: crpi-b9tacpruhecfbbdk.cn-beijing.personal.cr.aliyuncs.com
+      IMAGE_REPO: lupiter/lupiter # 镜像库名，可以根据需要修改
+
+    # 定义动作
+    steps:
+      - name: 1.代码检出
+        uses: actions/checkout@v4
+
+      - name: 2.加载环境变量
+        run: |
+          echo "加载环境变量参数"
+          source .env
+
+      - name: 3.登录阿里云容器镜像服务
+        run: |
+          sudo docker login --username=$ALIYUN_USERNAME --password=$ALIYUN_PASSWORD $ALIYUN_REGISTRY
+
+      - name: 4.同步 Docker 镜像
+        run: |
+          for IMAGE in "${DOCKER_IMAGES[@]}"; do
+            IMAGE_NAME=$(echo $IMAGE | cut -d: -f1)
+            IMAGE_TAG=$(echo $IMAGE | cut -d: -f2)
+            ALIYUN_IMAGE="${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}"
+
+            # 检查镜像是否已经存在
+            echo "检查镜像 ${ALIYUN_IMAGE} 是否已经存在于阿里云上"
+            docker pull ${ALIYUN_IMAGE} || true  # 如果镜像不存在，则跳过
+            if ! docker images ${ALIYUN_IMAGE} --format '{{.Repository}}:{{.Tag}}' | grep -q ${ALIYUN_IMAGE}; then
+              echo "镜像 ${ALIYUN_IMAGE} 未找到。正在从 DockerHub 拉取..."
+              # 拉取 Docker 镜像
+              docker pull $IMAGE
+              # 标记镜像
+              docker tag $IMAGE ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}
+              # 推送到阿里云
+              docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}
+            else
+              echo "镜像 ${ALIYUN_IMAGE} 已经存在。跳过 pull 和 push "
+            fi
+
+            # 清理本地镜像
+            docker rmi $IMAGE
+            docker rmi ${ALIYUN_IMAGE}
+          done
+
+      - name: 5.清理 Docker 镜像
+        run: |
+          docker system prune -f
