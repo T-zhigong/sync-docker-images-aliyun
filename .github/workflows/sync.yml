@@ -19,49 +19,20 @@ jobs:
       - name: 1.代码检出
         uses: actions/checkout@v4
 
-      - name: 2.加载环境变量
+      - name: 2.登录阿里云容器镜像服务
         run: |
-          echo "加载环境变量参数"
-          source .env
-          echo "DOCKER_IMAGES is $DOCKER_IMAGES"
-
-      - name: 3.登录阿里云容器镜像服务
-        run: |
-          sudo docker login --username=$ALIYUN_USERNAME --password=$ALIYUN_PASSWORD $ALIYUN_REGISTRY
+          docker login --username=$ALIYUN_USERNAME --password=$ALIYUN_PASSWORD $ALIYUN_REGISTRY
 
       - name: 4.同步 Docker 镜像
         run: |
-          for IMAGE in "${DOCKER_IMAGES[@]}"; do
+          # 拉取 Docker 镜像
+          docker pull mysql:8.0.41
+          # 标记镜像
+          docker tag mysql ${ALIYUN_REGISTRY}/${IMAGE_REPO}:8.0.41
+          # 推送到阿里云
+          docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:8.0.41
           
-            echo "Image: $IMAGE"
-            
-            IMAGE_NAME=$(echo $IMAGE | cut -d: -f1)
-            IMAGE_TAG=$(echo $IMAGE | cut -d: -f2)
-            ALIYUN_IMAGE="${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}"
-
-            echo "ALIYUN_IMAGE: $ALIYUN_IMAGE"
-            
-            # 检查镜像是否已经存在
-            echo "检查镜像 ${ALIYUN_IMAGE} 是否已经存在于阿里云上"
-            docker pull ${ALIYUN_IMAGE} || true  # 如果镜像不存在，则跳过
-            if ! docker images ${ALIYUN_IMAGE} --format '{{.Repository}}:{{.Tag}}' | grep -q ${ALIYUN_IMAGE}; then
-              echo "镜像 ${ALIYUN_IMAGE} 未找到。正在从 DockerHub 拉取..."
-              # 拉取 Docker 镜像
-              docker pull $IMAGE
-              # 标记镜像
-              docker tag $IMAGE ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG}
-              # 推送到阿里云
-              docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG} || { echo "推送失败"; exit 1; }
-            else
-              echo "镜像 ${ALIYUN_IMAGE} 已经存在。跳过 pull 和 push "
-            fi
-
-            # 清理本地镜像
-            docker rmi $IMAGE
-            docker rmi ${ALIYUN_IMAGE}
-          done
-
-      - name: 5.调试信息
+      - name: 调试信息
         run: |
-          echo "Docker images:"
+          echo "Docker images 命令"
           docker images
