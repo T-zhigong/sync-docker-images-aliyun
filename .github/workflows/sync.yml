@@ -39,11 +39,8 @@ jobs:
 
       - name: 3.同步Docker镜像到阿里云
         run: |
-          # 将 IMAGES 环境变量转换为数组
-          IFS=$'\n' read -rd '' -a IMAGE_ARRAY <<< "$IMAGES"
-          
           # 循环处理每个镜像
-          for IMAGE in "${IMAGE_ARRAY[@]}"; do
+          for IMAGE in "${IMAGES[@]}"; do
             echo "拉取镜像: $IMAGE"
             docker pull $IMAGE || { echo "拉取镜像失败: $IMAGE"; exit 1; }
           
