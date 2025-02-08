@@ -28,8 +28,10 @@ jobs:
 
       - name: 3.同步Docker镜像到阿里云
         run: |
-          # 循环处理每个镜像
+          # 将 IMAGES 字符串转换为数组
           IMAGES_ARRAY=($IMAGES)
+          
+          # 循环处理每个镜像
           for IMAGE in "${IMAGES_ARRAY[@]}"; do
             echo "拉取镜像: $IMAGE"
             docker pull $IMAGE || { echo "拉取镜像失败: $IMAGE"; exit 1; }
