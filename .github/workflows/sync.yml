@@ -13,19 +13,8 @@ jobs:
       ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }}
       ALIYUN_REGISTRY: ${{ vars.ALIYUN_REGISTRY }}  # 从 GitHub 环境变量获取阿里云容器镜像服务地址
       IMAGE_REPO: ${{ vars.IMAGE_REPO }}  # 从 GitHub 环境变量获取镜像库名
-      IMAGES: |
-        mysql:latest
-        mysql:8.0.41
-        mysql:8.0.40
-        redis
-        nacos/nacos-server:v2.4.3
-        quay.io/minio/minio
-        docker.elastic.co/elasticsearch/elasticsearch:7.17.27
-        postgres:latest
-        jenkins/jenkins:lts-jdk17
-        portainer/portainer-ce:2.21.5
-        sonatype/nexus3
-        
+      IMAGES: ${{ vars.IMAGES }}  # 从 GitHub 环境变量获取镜像列表
+
     # 定义动作
     steps:
       - name: 1.代码检出
@@ -33,7 +22,7 @@ jobs:
 
       - name: 2.登录阿里云容器镜像服务
         run: |
-          echo "Logging into Aliyun Registry..."
+          echo "登录阿里云注册中心"
           docker login --username=$ALIYUN_USERNAME --password=$ALIYUN_PASSWORD $ALIYUN_REGISTRY
         continue-on-error: false  # 确保登录失败时终止流程
 
@@ -52,7 +41,7 @@ jobs:
             echo "推送镜像: $TAGGED_IMAGE"
             docker push $TAGGED_IMAGE || { echo "推送镜像失败: $TAGGED_IMAGE"; exit 1; }
           done
-          
+
       - name: 4.查看本地镜像
         run: |
           echo "查看本地镜像列表"
@@ -62,4 +51,3 @@ jobs:
         run: |
           echo "查看本地镜像列表"
           docker search $ALIYUN_REGISTRY/${IMAGE_REPO}
-      
