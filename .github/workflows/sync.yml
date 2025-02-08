@@ -29,7 +29,7 @@ jobs:
       - name: 3.同步Docker镜像到阿里云
         run: |
           # 镜像列表
-          IMAGES="$IMAGES_ENV"
+          IMAGES=("${IMAGES_ENV[@]}")
           echo "镜像列表: $IMAGES"
           
           # 循环处理每个镜像
