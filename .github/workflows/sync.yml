@@ -30,21 +30,21 @@ jobs:
         run: |
           # 将 IMAGES 环境变量转换为数组
           IFS=$'\n' read -rd '' -a IMAGE_ARRAY <<< "$IMAGES"
-
+          
           # 循环处理每个镜像
-          for IMAGE in "${IMAGES[@]}"; do
+          for IMAGE in "${IMAGE_ARRAY[@]}"; do
             echo "拉取镜像: $IMAGE"
             docker pull $IMAGE || { echo "拉取镜像失败: $IMAGE"; exit 1; }
-
+          
             # 打标签并推送到阿里云
             TAGGED_IMAGE="${ALIYUN_REGISTRY}/${IMAGE_REPO}/$(basename $IMAGE)"
             echo "标记镜像: $IMAGE as $TAGGED_IMAGE"
             docker tag $IMAGE $TAGGED_IMAGE || { echo "无法标记图像: $IMAGE"; exit 1; }
-
+          
             echo "推送镜像: $TAGGED_IMAGE"
             docker push $TAGGED_IMAGE || { echo "推送镜像失败: $TAGGED_IMAGE"; exit 1; }
           done
-
+          
       - name: 4.查看本地镜像
         run: |
           echo "查看本地镜像列表"
