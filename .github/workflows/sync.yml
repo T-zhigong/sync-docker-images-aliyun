@@ -49,8 +49,3 @@ jobs:
         run: |
           echo "查看本地镜像列表"
           docker images
-
-      - name: 5.查看远程镜像
-        run: |
-          echo "查看本地镜像列表"
-          docker search $ALIYUN_REGISTRY/${IMAGE_REPO}
