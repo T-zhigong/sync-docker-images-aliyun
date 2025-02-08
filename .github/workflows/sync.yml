@@ -1,18 +1,18 @@
 name: Sync Docker Images AliYun
 on:
   schedule:
-    - cron: '0 0 * * 5' # 每周五 00:00 UTC 执行任务
+    - cron: '0 0 * * 5'  # 每周五 00:00 UTC 执行任务
   workflow_dispatch:  # 允许手动触发同步
 
 jobs:
   # 定义任务
   sync:
-    runs-on: ubuntu-latest # 运行在 Ubuntu Linux环境上
+    runs-on: ubuntu-latest  # 运行在 Ubuntu Linux环境上
     env:
-      ALIYUN_USERNAME: 去棹残阳里
-      ALIYUN_PASSWORD: TianLi71773@
+      ALIYUN_USERNAME: ${{ secrets.ALIYUN_USERNAME }}
+      ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }}
       ALIYUN_REGISTRY: crpi-b9tacpruhecfbbdk.cn-beijing.personal.cr.aliyuncs.com
-      IMAGE_REPO: lupiter # 镜像库名，可以根据需要修改
+      IMAGE_REPO: lupiter  # 镜像库名，可以根据需要修改
 
     # 定义动作
     steps:
@@ -21,25 +21,42 @@ jobs:
 
       - name: 2.登录阿里云容器镜像服务
         run: |
+          echo "Logging into Aliyun Registry..."
           docker login --username=$ALIYUN_USERNAME --password=$ALIYUN_PASSWORD $ALIYUN_REGISTRY
+        continue-on-error: false  # 确保登录失败时终止流程
 
       - name: 3.同步 Docker 镜像
         run: |
-          # 拉取指定版本的 MySQL 镜像
-          docker pull mysql:latest
-          # 标记镜像时指定正确的标签
-          docker tag mysql:latest ${ALIYUN_REGISTRY}/${IMAGE_REPO}/mysql:latest
-          # 推送到阿里云容器镜像服务
-          docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}/mysql:latest
-          
-          # 拉取指定版本的 MySQL 镜像
-          docker pull mysql:8.0.41
-          # 标记镜像时指定正确的标签
-          docker tag mysql:8.0.41 ${ALIYUN_REGISTRY}/${IMAGE_REPO}/mysql:8.0.41
-          # 推送到阿里云容器镜像服务
-          docker push ${ALIYUN_REGISTRY}/${IMAGE_REPO}/mysql:8.0.41
+          # 镜像列表
+          IMAGES=(
+            "mysql:latest"
+            "mysql:8.0.41"
+            "mysql:8.0.40"
+            "redis"
+            "nacos/nacos-server:v2.4.3"
+            "quay.io/minio/minio"
+            "docker.elastic.co/elasticsearch/elasticsearch:7.17.27"
+            "postgres:latest"
+            "jenkins/jenkins:lts-jdk17"
+            "portainer/portainer-ce:2.21.5"
+            "sonatype/nexus3"
+          )
 
-      - name: 4.调试信息
+          # 循环处理每个镜像
+          for IMAGE in "${IMAGES[@]}"; do
+            echo "拉取镜像: $IMAGE"
+            docker pull $IMAGE || { echo "拉取镜像失败: $IMAGE"; exit 1; }
+
+            # 打标签并推送到阿里云
+            TAGGED_IMAGE="${ALIYUN_REGISTRY}/${IMAGE_REPO}/$(basename $IMAGE)"
+            echo "标记镜像: $IMAGE as $TAGGED_IMAGE"
+            docker tag $IMAGE $TAGGED_IMAGE || { echo "无法标记图像: $IMAGE"; exit 1; }
+
+            echo "推送镜像: $TAGGED_IMAGE"
+            docker push $TAGGED_IMAGE || { echo "推送镜像失败: $TAGGED_IMAGE"; exit 1; }
+          done
+
+      - name: 4.查看镜像
         run: |
-          echo "查看镜像"
+          echo "查看本地镜像列表..."
           docker images
