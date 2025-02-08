@@ -13,7 +13,6 @@ jobs:
       ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }}
       ALIYUN_REGISTRY: ${{ vars.ALIYUN_REGISTRY }}  # 从 GitHub 环境变量获取阿里云容器镜像服务地址
       IMAGE_REPO: ${{ vars.IMAGE_REPO }}  # 从 GitHub 环境变量获取镜像库名
-      IMAGES: ${{ vars.IMAGES }}  # 从 GitHub 环境变量获取镜像列表
 
     # 定义动作
     steps:
@@ -28,6 +27,21 @@ jobs:
 
       - name: 3.同步Docker镜像到阿里云
         run: |
+          # 镜像列表
+          IMAGES=(
+            "mysql:latest"
+            "mysql:8.0.41"
+            "mysql:8.0.40"
+            "redis"
+            "nacos/nacos-server:v2.4.3"
+            "quay.io/minio/minio"
+            "docker.elastic.co/elasticsearch/elasticsearch:7.17.27"
+            "postgres:latest"
+            "jenkins/jenkins:lts-jdk17"
+            "portainer/portainer-ce:2.21.5"
+            "sonatype/nexus3"
+          )
+          
           # 循环处理每个镜像
           for IMAGE in "${IMAGES[@]}"; do
             echo "拉取镜像: $IMAGE"
